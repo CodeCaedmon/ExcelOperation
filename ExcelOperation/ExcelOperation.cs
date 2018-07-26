@@ -58,57 +58,40 @@ namespace Caedmon
             string strExcel = "select * from [sheet1$]";
             DataSet ds = new DataSet();
             OleDbDataAdapter myCommand = new OleDbDataAdapter(strExcel, strConn);            
-            myCommand.Fill(ds, "table1");  //"table1 ?"
+            myCommand.Fill(ds, "table1");  //"table1为ds中存储数据表的名称，并不是源数据表的名称，源数据表的名称为sheet1$"
             return ds; 
         }
 
         public DataTable ExcelToDT(string Path)
         {
-            // 连接字符串
             string strConn = "Provider=Microsoft.Jet.OLEDB.4.0;" + "Data Source=" + Path + ";" + "Extended Properties='Excel 8.0;HDR=Yes;IMEX=2'";
-            //  provider：表示提供程序名称
-            //  Data Source：这里填写Excel文件的路径
-            //  Extended Properties：设置Excel的特殊属性
-            //  Extended Properties 取值：
-            //  Excel 8.0 针对Excel2000及以上版本，Excel5.0 针对Excel97。
-            //  HDR = Yes 表示第一行包含列名,在计算行数时就不包含第一行
-            //  IMEX 0:导入模式,1:导出模式: 2混合模式
-
             OleDbConnection conn = new OleDbConnection(strConn);
-            //  在数据访问中首先必须建立到数据库的物理连接。OLEDB.NET Data Provider 使用OleDbConnection类的对象标识与一个数据库的物理连接。
-            //  OleDbConnection类的常用属性及其说明:
-            //  ———————————————————————————
-            //  属性说明
-            //  ConnectionString 获取或设置用于打开数据库的字符串
-            //  ConnectionTimeOut 获取在尝试建立连接时终止尝试并生成错误之前所等待的时间
-            //  Database 获取当前数据库或连接打开后要使用的数据库名称
-            //  DataSource 获取数据源的服务器名或文件名
-            //  Provider 获取在连接字符串的“Provider = ” 子句中指定的OLEDB提供程序的名称
-            //  State 获取连接的当前状态
-            //  ———————————————————————————————————————  
-            //  Connecting 连接对象正在与数据源连接
-            //  Executing  连接对象正在执行命令
-            //  Fetching   连接对象正在检索数据
-            //  Open       连接对象处于打开状态
-            //————————————————————————————————————————
-            //  OleDbConnection类的常用方法如下表所示：
-            //————————————————————————————————————————
-            //  Open  使用ConnectionString所指定的属性设置打开数据库连接
-            //  Close 关闭与数据库的连接，这是关闭任何打开连接的首选方法
-            //  CreateCommand  创建并返回一个与OleDbConnection关联的OleDbCommand对象
-            //  ChangeDatabase 为打开的OleDbConnection更改当前数据库
-            //————————————————————————————————————————
-
             conn.Open();
-            //  OleDbDataAdapter 充当 DataSet 和数据源之间的桥梁，用于检索和保存数据。
-            //  OleDbDataAdapter 通过以下方法提供这个桥接器：
-            //  使用 Fill 将数据从数据源加载到 DataSet中，并使用 Update 将 DataSet 中所作的更改发回数据源。
             string strExcel = "select * from [sheet1$]";   // sheet1 为源Excel中的默认表名
             DataTable dt = new DataTable();
             OleDbDataAdapter myCommand = new OleDbDataAdapter(strExcel, strConn);
             myCommand.Fill(dt, "table1");     //"table1 为dt的表名"
             return dt;
         }
+
+        public DataTable GetExcelTable(string excelFilename)
+        {
+            string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" + "Data Source=" + excelFilename + ";" + "Extended Properties='Excel 12.0;HDR=Yes;IMEX=2'";
+            DataSet ds = new DataSet();
+            string tableName;
+            using (OleDbConnection connection = new OleDbConnection(connectionString))
+            {
+                connection.Open();
+                DataTable table = connection.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+                tableName = table.Rows[0]["Table_Name"].ToString();
+                string strExcel = "select * from " + "[" + tableName + "]";
+                OleDbDataAdapter adapter = new OleDbDataAdapter(strExcel, connectionString);
+                adapter.Fill(ds, tableName);
+                connection.Close();
+            }
+            return ds.Tables[tableName];
+        }
+
 
         // IMEX表示是否强制转换为文本
         // 特别注意

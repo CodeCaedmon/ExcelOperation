@@ -32,10 +32,11 @@ namespace Caedmon
             Path =@PathText.Text+ NameText.Text+".xlsx";
             DataSet ds = new DataSet();
             ExcelOperation eco = new ExcelOperation();
-            ds = eco.ExcelToDS(Path);
             DataTable dt = new DataTable();
-            dt = ds.Tables[0];
+            dt = eco.GetExcelTable(Path);
             DataGrid1.ItemsSource = dt.DefaultView;
+            DataGrid1.GridLinesVisibility = DataGridGridLinesVisibility.All;
+
         }
     }
 }
